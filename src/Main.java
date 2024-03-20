@@ -6,93 +6,10 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-enum Department {
-    DEV, QA, SUPPORT
-}
-
-class EAddress{
-    private String city;
-    private String pincode;
-
-    public EAddress(String city, String pincode) {
-        this.city = city;
-        this.pincode = pincode;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getPincode() {
-        return pincode;
-    }
-
-    public void setPincode(String pincode) {
-        this.pincode = pincode;
-    }
-}
-class Employee {
-    private Integer id;
-    private String name;
-    private LocalDate dateOfJoining;
-    private Department department;
-    private EAddress eAddress;
-
-    public Employee(Integer id, String name, LocalDate dateOfJoining, Department department, EAddress eAddress) {
-        this.id = id;
-        this.name = name;
-        this.dateOfJoining = dateOfJoining;
-        this.department = department;
-        this.eAddress = eAddress;
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public LocalDate getDateOfJoining() {
-        return dateOfJoining;
-    }
-
-    public void setDateOfJoining(LocalDate dateOfJoining) {
-        this.dateOfJoining = dateOfJoining;
-    }
-
-    public Department getDepartment() {
-        return department;
-    }
-
-    public void setDepartment(Department department) {
-        this.department = department;
-    }
-
-    public EAddress geteAddress() {
-        return eAddress;
-    }
-
-    public void seteAddress(EAddress eAddress) {
-        this.eAddress = eAddress;
-    }
-}
+import java.util.logging.Logger;
 
 public class Main {
+    public static final Logger logger = Logger.getLogger(Main.class.getName());
     public static void main(String[] args) {
         List<Employee> employees = new ArrayList<>();
         Random random = new Random();
@@ -108,11 +25,24 @@ public class Main {
                 .filter(employee -> employee.getDateOfJoining().isBefore(LocalDate.of(2022, 1, 1)))
                 .toList();
 
+        StringBuilder joinedBeforeJan2022Builder = new StringBuilder("Employees who joined before January 2022: ");
+        for (Employee employee : employeesJoinedBeforeJan2022) {
+            joinedBeforeJan2022Builder.append(employee.getName()).append(", ");
+        }
+        logger.info(joinedBeforeJan2022Builder.toString());
+
         List<Employee> employeesInGurgaonAndDev = employees.stream()
                 .filter(employee -> employee.geteAddress().getCity().equalsIgnoreCase("Gurgaon") && employee.getDepartment() == Department.DEV)
                 .toList();
 
-        Consumer<Employee> employeeConsumer = employee -> System.out.println(employee.getName());
+        StringBuilder inGurgaonAndDevBuilder = new StringBuilder("Employees residing in Gurgaon and in the DEV department: ");
+        for (Employee employee : employeesInGurgaonAndDev) {
+            inGurgaonAndDevBuilder.append(employee.getName()).append(", ");
+        }
+        logger.info(inGurgaonAndDevBuilder.toString());
+
+        logger.info("Iterating employees using a consumer:");
+        Consumer<Employee> employeeConsumer = employee -> logger.info(employee.getName());
         employees.forEach(employeeConsumer);
 
         employees.addAll(employees.subList(0, 100));
@@ -120,11 +50,13 @@ public class Main {
         ConcurrentMap<Integer, Employee> employeeMap = employees.stream()
                 .collect(Collectors.toConcurrentMap(Employee::getId, emp -> emp, (existing, replacement) -> existing));
 
-        employeeMap.forEach((key, value) -> System.out.println("ID: " + key + ", Employee: " + value.getName()));
+        logger.info("Iterating the employee map after adding duplicates");
+        employeeMap.forEach((key, value) -> logger.info("ID: " + key + ", Employee: " + value.getName()));
 
         Map<Department, Long> departmentEmployeeCount = employees.parallelStream()
                 .collect(Collectors.groupingByConcurrent(Employee::getDepartment, Collectors.counting()));
 
-        departmentEmployeeCount.forEach((department, count) -> System.out.println(department + ": " + count));
+        logger.info("Printing the number of employees in each department:");
+        departmentEmployeeCount.forEach((department, count) -> logger.info(department + ": " + count));
     }
 }
